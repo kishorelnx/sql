@@ -227,35 +227,39 @@ select * from tab1 t1 NATURAL JOIN tab2 t2;
 
 --Left join
 select * from tab1 t1 left outer join tab2 t2 on t1.sno=t2.sno;--2
+select * from tab1 t1 left join tab2 t2 on t1.sno=t2.sno;--2
+select * from tab1 t1 join tab2 t2 on t1.sno=t2.sno(+);-- 9i and prior 9i
 
 --Right join
 select * from tab1 t1 right outer join tab2 t2 on t1.sno=t2.sno;--2
+select * from tab1 t1 right join tab2 t2 on t1.sno=t2.sno;--2
+select * from tab1 t1 join tab2 t2 on t1.sno(+)=t2.sno;
 
 -- full outer join
 select * from tab1 t1 full outer join tab2 t2 on t1.sno=t2.sno;--2
+select * from tab1 t1 full join tab2 t2 on t1.sno=t2.sno;--2
 
-T1:
-1	Kiran
-2	Kishore
-4	Sushma
-6	Bhanu
+-- self join--
+select * from emp;
+--WAP to display emp names and their mgr names
 
-T2:
-1	SALC
-2	EF
-3	BB
-5	CH
+--Org Strucure
+Kiran - Shailedra
+Kishore - Adithya
+Sushma - Bhanu
 
-1	SALC 1 Kiran
-2	EF   2 Kishore
-3	BB   null null
-5	CH   null null
+--EMP table:
+EMPNO   ENAME       MANAGER
+----    -----       -------
+100     Kiran       104
+101     Kishore     105
+102     Sushma      103    
+103     Bhanu       106
+104     Shailndra   106
+105     Adithya     106
+106     Amma         -
 
-1   Kiran   1 SALC
-2   Kishore 2 EF
-null null   3 BB
-null null   5 CH
-
+select e1.ename as EMPLOYEE ,e2.ename as MANAGER from EMP e1 left join EMP e2 on e1.mgr=e2.empno;
 
 
 select * from emp;
@@ -326,3 +330,201 @@ INTERSECT - records present in both data sets
 2
 3
 5
+select SNO from tab1;
+select SNO from tab2;
+
+-- USING not in
+select sno from tab1 where sno not in (select sno from tab2);
+
+(select SNO from tab1) MINUS (select SNO from tab2);
+
+-- nth highist
+
+select * from emp;
+
+-- dept wise highist
+select deptno,max(sal) from emp group by deptno;
+
+-- ANALYTICAL Functions
+select * from (select emp.*, ROW_NUMBER() over(partition by deptno order by sal desc) rno FROM emp) WHERE rno=1; -- 
+
+select * from (select emp.*, RANK() over(partition by deptno order by sal desc) rno FROM emp) WHERE rno=1; -- skiping
+
+select * from (select emp.*, DENSE_RANK() over(partition by deptno order by sal desc) rno FROM emp) WHERE rno=1; -- no skiping
+
+
+-- NVL
+select emp.*,NVL(COMM,0) as status from emp;
+
+--NVL2
+select emp.*,NVL2(COMM,0,1) as status from emp;
+
+--LISTAGG
+select listagg(ename,';') WITHIN GROUP (ORDER BY ename)  from emp;
+
+-- order by
+select empno, ename from emp order by 3 desc;
+/*********PL/SQL**********/
+set serveroutput on
+DECLARE
+    sno number:=10;
+    sname varchar2(20);
+    --DOB DATE default sysdate;
+    Is_clover BOOLEAN;-- TRUE/FALSE
+    Marks number;
+BEGIN
+    sname :='Kiran';
+    Marks := 900;
+    
+    IF MARKS >= 900
+    then    
+        Is_clover:=TRUE;        
+    ELSIF MARKS <900
+    then
+        Is_clover:=FALSE;
+    end if;
+    
+    IF IS_clover
+    then
+        dbms_output.put_line('SNo#'||sno||' Sname: '||sname||' marks: '||marks||'*** CLOVER***');
+    end if;
+    
+EXCEPTION
+WHEN others THEN
+    dbms_output.put_line('Excpetion raised...!'||DBMS_UTILITY.format_error_backtrace);
+END;
+----
+
+create or replace procedure p1 
+as
+    sno number:=10;
+    sname varchar2(20);
+    --DOB DATE default sysdate;
+    Is_clover BOOLEAN;-- TRUE/FALSE
+    Marks number;
+BEGIN
+    sname :='Kiran';
+    Marks := 900;
+    
+    IF MARKS >= 900
+    then    
+        Is_clover:=TRUE;        
+    ELSIF MARKS <900
+    then
+        Is_clover:=FALSE;
+    end if;
+    
+    IF IS_clover
+    then
+        dbms_output.put_line('SNo#'||sno||' Sname: '||sname||' marks: '||marks||'*** CLOVER***');
+    end if;
+    
+EXCEPTION
+WHEN others THEN
+    dbms_output.put_line('Excpetion raised...!'||DBMS_UTILITY.format_error_backtrace);
+END;
+
+
+
+execute p1;
+
+BEGIN
+    p1;
+END;
+
+
+create or replace procedure p2(n number)
+AS
+BEGIN
+    for i in 1..n
+    loop
+        dbms_output.put_line(i);
+    end loop;
+EXCEPTION
+WHEN others THEN
+    dbms_output.put_line('Excpetion raised...!'||DBMS_UTILITY.format_error_backtrace);
+END p2;
+
+execute p2(10);
+
+BEGIN
+    p2(10);
+END;
+
+
+create or replace procedure p3(n IN number, v_sum OUT number)
+AS   
+BEGIN
+    
+    v_sum:=0;
+    
+    for i in 1..n
+    loop
+        v_sum:=v_sum+i;
+    end loop;
+    dbms_output.put_line('v_sum from P3: '||v_sum);
+EXCEPTION
+WHEN others THEN
+    dbms_output.put_line('Excpetion raised...!'||DBMS_UTILITY.format_error_backtrace);
+END p3;
+
+
+execute p3(10);
+
+DECLARE
+x number:=100;
+y number;
+t number;
+BEGIN
+    p3(10,t);
+    --y:=x+p3(10,t);
+    y:=x+t;
+    dbms_output.put_line(y);
+END;
+
+
+
+create or replace procedure p4(n IN OUT number)
+AS   
+    v_sum number:=0;
+BEGIN
+    
+    v_sum:=0;
+    
+    for i in 1..n
+    loop
+        v_sum:=v_sum+i;
+    end loop;
+    dbms_output.put_line('v_sum from P3: '||v_sum);
+    n:=v_sum;
+EXCEPTION
+WHEN others THEN
+    dbms_output.put_line('Excpetion raised...!'||DBMS_UTILITY.format_error_backtrace);
+END p4;
+
+DECLARE
+x number:=100;
+y number;
+t number:=10;
+BEGIN
+    p4(t);
+    --y:=x+p3(10,t);
+    y:=x+t;
+    dbms_output.put_line(y);
+END;
+
+
+
+--anonymous block vs named block
+-- cusor
+declare 
+    cursor cur1 is select * from emp;
+begin
+    for i in cur1
+    loop
+        dbms_output.put_line(i.ename);
+    end loop;    
+EXCEPTION
+WHEN others THEN
+    dbms_output.put_line('Excpetion raised...!'||DBMS_UTILITY.format_error_backtrace);
+end;
